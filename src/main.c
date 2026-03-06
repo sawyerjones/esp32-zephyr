@@ -8,7 +8,7 @@ LOG_MODULE_REGISTER(bmp280_app, LOG_LEVEL_INF);
 /* https://docs.zephyrproject.org/latest/doxygen/html/group__device__model.html#gaadf3ffb63df544eb3de356ab2c5e9e3c 
  * what actually allows abstraction away from hardware
  */
-const struct device *const bmp280_dev = DEVICE_DT_GET_ANY(bosch_bmp280);
+const struct device *const bmp280_dev = DEVICE_DT_GET_ANY(bosch_bme280);
 
 int main(void) {
     if (!device_is_ready(bmp280_dev)) {

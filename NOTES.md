@@ -6,6 +6,12 @@ Need to activate Zephyr before any development
 
 run `cd ~` and `source activate-zephyr` before any development
 
+Build cmd: `west build -p always -b esp32_devkitc/esp32/procpu`
+
+i2c wiring check through monitor: `i2c scan i2c@3ff53000`, make sure `CONFIG_SHELL` configured in prj.conf
+
+
+
 ## Hardware
 
 ### [Board](espressif.com/documentation/esp32_datasheet_en.pdf#cd-peri-pin-config)
