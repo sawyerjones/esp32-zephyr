@@ -27,3 +27,9 @@ SDD --> GND
 
 ### [Sensor](https://cdn.shopify.com/s/files/1/0837/4340/8415/files/BMP280-Datasheet.pdf?v=1768632341)
 From top to bottom: VCC, GND, SCL, SDA, CSB, SDD
+
+
+## Software
+
+### Relationships
+ESP -> JSON (over wifi)-> MQTT -> Dash
