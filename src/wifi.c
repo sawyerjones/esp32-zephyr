@@ -2,6 +2,7 @@
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/wifi_mgmt.h>
 #include <zephyr/net/net_event.h>
+#include "wifi.h"
 #include "secrets.h"
 
 #define WIFI_TIMEOUT K_SECONDS(20)
@@ -20,10 +21,10 @@ static struct net_mgmt_event_callback wifi_cb;
 static struct net_mgmt_event_callback ipv4_cb;
 
 // iface required by net_mgmt_event_callback
-static void wifi_event_handler(struct net_mgmt_event_callback *wifi_cb, 
-                                uint32_t mgmt_event, struct net_if *iface) {
+static void wifi_event_handler(struct net_mgmt_event_callback *cb, 
+                                uint64_t mgmt_event, struct net_if *iface) {
     if (mgmt_event == NET_EVENT_WIFI_CONNECT_RESULT) {
-        struct wifi_status *status = (struct wifi_status *)wifi_cb;
+        struct wifi_status *status = (struct wifi_status *)cb->info;
         if (status->conn_status == WIFI_STATUS_CONN_SUCCESS) {
             printk("[WIFI] connected\n");
             k_sem_give(&wifi_connected);
@@ -34,7 +35,7 @@ static void wifi_event_handler(struct net_mgmt_event_callback *wifi_cb,
 }
 
 static void ipv4_event_handler(struct net_mgmt_event_callback *ipv4_cb,
-                                uint32_t mgmt_event, struct net_if *iface) {
+                                uint64_t mgmt_event, struct net_if *iface) {
     if (mgmt_event == NET_EVENT_IPV4_ADDR_ADD) {
         printk("[WIFI] IP assigned");
         k_sem_give(&ipv4_obtained);
@@ -67,16 +68,35 @@ int wifi_connect(void) {
         printk("[WIFI] connection request failed: %d\n", ret);
         return ret;
     }
-    
+
     if (k_sem_take(&wifi_connected, WIFI_TIMEOUT)) {
         printk("[wifi] Timeout waiting for WiFi\n");
         return -ETIMEDOUT;
     }
+
+    struct net_linkaddr *mac = net_if_get_link_addr(iface);
+    printk("[WIFI] MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
+        mac->addr[0], mac->addr[1], mac->addr[2],
+        mac->addr[3], mac->addr[4], mac->addr[5]);
+
+    // move off of 1.0.0.0
+    net_dhcpv4_start(iface);
+    printk("[WIFI] DHCP started\n");
+
     if (k_sem_take(&ipv4_obtained, WIFI_TIMEOUT)) {
         printk("[wifi] Timeout waiting for IP\n");
         return -ETIMEDOUT;
     }
 
-    printk("[wifi] Ready!\n");
+    struct net_in_addr *if_addr = net_if_ipv4_get_global_addr(iface, NET_ADDR_PREFERRED);
+    if (if_addr) {
+        char buf[NET_IPV4_ADDR_LEN];
+        net_addr_ntop(AF_INET, if_addr, buf, sizeof(buf));
+        printk("[WIFI] ESP32 IP: %s\n", buf);
+    } else {
+        printk("[WIFI] no preferred IPv4 address found\n");
+    }
+
+    printk("[WIFI] Ready!\n");
     return 0;
 }

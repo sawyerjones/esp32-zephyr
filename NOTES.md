@@ -25,6 +25,8 @@ CSB --> 3.3v
 
 SDD --> GND
 
+**MAC**: 20:E7:C8:EC:D4:D0
+
 ### [Sensor](https://cdn.shopify.com/s/files/1/0837/4340/8415/files/BMP280-Datasheet.pdf?v=1768632341)
 From top to bottom: VCC, GND, SCL, SDA, CSB, SDD
 
@@ -33,3 +35,6 @@ From top to bottom: VCC, GND, SCL, SDA, CSB, SDD
 
 ### Relationships
 ESP -> JSON (over wifi)-> MQTT -> Dash
+
+
+### [Mosquitto](https://docs.zephyrproject.org/latest/connectivity/networking/api/mqtt.html)
