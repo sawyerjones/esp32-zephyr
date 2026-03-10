@@ -3,6 +3,7 @@
 #include <zephyr/net/socket.h>
 #include <zephyr/net/net_ip.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/random/random.h>
 #include <string.h>
 #include <stdio.h>
 #include "secrets.h"
