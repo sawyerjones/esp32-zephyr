@@ -8,29 +8,30 @@
  * 
  * inits the mqtt_client struct, sets broker address/port,
  * and calls mqtt_connect(). Blocks until CONNACK is received.
+ * must be called after wifi_connect()
  * 
  * @returns 0 on success, - errno on failure
  */
 int mqtt_app_connect(void);
 
 /**
- * @brief publish a sensor reading to sensor/node1/data
+ * @brief publish a sensor reading to sensor/esp32
  * 
  * serialises temp and pressure into a JSON payload and publishes
- * at QoS 0. Requires mqtt_app_connect() to have succeeded first.
+ * at QoS 0. Guards the mqtt_client with mqtt_sem internally.
  * 
  * @returns 0 on success, - errno on fail
  */
-int mqtt_publish_sensor(float temp, float pressure);
+int mqtt_publish_sensor(double temp, double pressure);
 
 /**
- * @brief MQTT poll loop — blocking, never returns
- * 
- * polls the MQTT socket for incoming data and services the
- * keep-alive PING cycle via mqtt_live(). Called from main()
- * after mqtt_app_connect() succeeds.
+ * @brief MQTT thread entry point.
+ *
+ * defined via K_THREAD_DEFINE in mqtt.c, DO NOT CALL DIRECTLY.
+ * polls the MQTT socket for incoming traffic, drives the keepalive
+ * cycle via mqtt_live(), and drains sensor_msgq to publish readings.
  */
-void mqtt_poll_loop(void);
+void mqtt_thread_entry(void *p1, void *p2, void *p3);
 
 /**
  * @brief MQTT event callback (registered internally, exposed for reference)
