@@ -10,6 +10,10 @@ Build cmd: `west build -p always -b esp32_devkitc/esp32/procpu`
 
 i2c wiring check through monitor: `i2c scan i2c@3ff53000`, make sure `CONFIG_SHELL` configured in prj.conf
 
+rpi: activate venv, run:
+- `mosquitto_sub -h localhost -t "#" -v` for json data
+- `python3 subscriber.py` for SQLite updates
+
 
 
 ## Hardware

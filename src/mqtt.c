@@ -26,6 +26,8 @@ static uint8_t pub_topic[] = "sensor/esp32";
 
 /* controls publish/polling */
 K_SEM_DEFINE(mqtt_sem, 1, 1);
+/* prevent mqtt from initializing before fds is ready */
+K_SEM_DEFINE(mqtt_ready, 0, 1);
 
 /* http://www.steves-internet-guide.com/understanding-mqtt-qos-levels-part-1/ */
 void mqtt_event_handler(struct mqtt_client *c, const struct mqtt_evt *evt) {
@@ -71,6 +73,8 @@ int mqtt_app_connect(void) {
     if (ret) {
         printk("[MQTT] mqtt_connect failed: %d\n", ret);
     }
+    // signal we are ready to init mqtt
+    k_sem_give(&mqtt_ready);
     return ret;
 }
 
@@ -109,6 +113,9 @@ int mqtt_publish_sensor(double temp, double pressure) {
 void mqtt_thread_entry(void *p1, void *p2, void *p3) {
     ARG_UNUSED(p1); ARG_UNUSED(p2); ARG_UNUSED(p3);
 
+    // wait for mqtt_app_connect to complete before assigning fds
+    k_sem_take(&mqtt_ready, K_FOREVER);
+
     struct zsock_pollfd fds = { 
         .fd = client.transport.tcp.sock,
         .events = ZSOCK_POLLIN,
@@ -116,7 +123,6 @@ void mqtt_thread_entry(void *p1, void *p2, void *p3) {
 
     struct sensor_reading reading;
 
-    /* wait for WIFI + mqtt_app_connect (signaled from main) */
     while (1) {
         // check for mqtt traffic w/o blocking
         int rc = zsock_poll(&fds, 1, 100);
