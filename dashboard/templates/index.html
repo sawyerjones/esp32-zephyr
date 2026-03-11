@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Env Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: monospace; max-width: 900px; margin: 40px auto; }
+        canvas { max-height: 300px; }
+        button { margin: 4px; padding: 8px 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Environment Monitor</h2>
+    <canvas id="tempChart"></canvas>
+    <canvas id="pressChart"></canvas>
+
+    <script>
+    const API = "http://192.168.1.2:5000/api";
+
+    async function loadCharts() {
+        const res = await fetch(`${API}/readings?limit=50`);
+        const data = (await res.json()).reverse();
+
+        const labels = data.map(r => r.timestamp.slice(11, 19));
+        const temps  = data.map(r => r.temp);
+        const press  = data.map(r => r.pressure);
+
+        new Chart(document.getElementById("tempChart"), {
+            type: "line",
+            data: { labels, datasets: [{ label: "Temperature °C", data: temps, borderColor: "tomato", tension: 0.3 }] }
+        });
+
+        new Chart(document.getElementById("pressChart"), {
+            type: "line",
+            data: { labels, datasets: [{ label: "Pressure hPa", data: press, borderColor: "steelblue", tension: 0.3 }] }
+        });
+    }
+
+    async function send(cmd) {
+        const res = await fetch(`${API}/command`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ command: cmd })
+        });
+        const data = await res.json();
+        document.getElementById("cmdStatus").textContent =
+            data.sent ? `Sent: ${data.sent}` : `Error: ${data.error}`;
+    }
+
+    loadCharts();
+    setInterval(loadCharts, 10000); // refresh every 10s
+    </script>
+</body>
+</html>

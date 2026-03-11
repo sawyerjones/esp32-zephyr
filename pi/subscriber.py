@@ -1,9 +1,9 @@
 import paho.mqtt.client as mqtt
 import sqlite3, json, datetime
 
-DB_PATH = "sensor_data.db"
+DB_PATH    = "sensor_data.db"
 BROKER_HOST = "localhost"
-TOPIC = "sensor/#"
+TOPIC      = "sensor/#"
 
 def init_db(conn):
     conn.execute("""
@@ -13,6 +13,13 @@ def init_db(conn):
             timestamp TEXT    NOT NULL,
             temp      REAL,
             pressure  REAL
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS commands (
+            id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT    NOT NULL,
+            command   TEXT    NOT NULL
         )
     """)
     conn.commit()
@@ -38,7 +45,7 @@ def on_message(client, userdata, msg):
         print(f"[error] {e}")
 
 if __name__ == "__main__":
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     init_db(conn)
 
     client = mqtt.Client(userdata={"db": conn})
